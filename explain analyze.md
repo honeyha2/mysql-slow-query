@@ -28,7 +28,7 @@ group by
 ```
   
 explain analyze
-```
+```sql
 -> Table scan on <temporary>  (actual time=0.001..0.002 rows=2 loops=1)
     -> Aggregate using temporary table  (actual time=1409.291..1409.292 rows=2 loops=1)
         -> Filter: ((adv_cre.put_st = 1) or (adv_cre.put_st is null))  (cost=52371.63 rows=323) (actual time=568.137..1401.682 rows=4707 loops=1)
@@ -55,8 +55,7 @@ explain analyze
 
 据此可以明确得知，由于第1、2步查询ui表得到56158行，此后的join操作均基于这56158行，性能瓶颈在此。
 
-
-#优化方案1
+# 优化方案1
 由于where条件中存在cre.camp_id in (123)这一条件，这一过滤条件会大大减少数据量，根据"小表驱动大表"的原则，尝试用cre表驱动ui表，使用straight_join指令强制指定左表为驱动表
 
 sql
@@ -67,7 +66,7 @@ from
 ```
 
 再次explain analyze
-```
+```sql
 -> Table scan on <temporary>  (actual time=0.003..0.003 rows=2 loops=1)
     -> Aggregate using temporary table  (actual time=1307.326..1307.327 rows=2 loops=1)
         -> Filter: ((adv_cre.put_st = 1) or (adv_cre.put_st is null))  (cost=45410.20 rows=600) (actual time=440.053..1304.115 rows=4707 loops=1)
@@ -82,6 +81,6 @@ from
 
 可以看到，第1步Index lookup on cre得到467543行结果。第2步Filter得到4707行数据。之后的join操作均基于这4707行，性能大大提升。
 
-#优化方案2
+# 优化方案2
 
 可以将这条复杂的join语句拆分为4条简单的sql语句。4条sql都是简单的单表查询，串行执行，直到遇到查不到数据的sql就停止。实践中，大多数请求在执行第一条sql时就因为没有结果而返回了，根本不会执行后续的sql。这样做不仅降低了sql耗时，同时降低了sql请求量。
