@@ -51,4 +51,4 @@ explain analyze
 7. Nested loop left join。将5和6中得到的数据进行left join，得到4707行数据
 8. Filter。对7中得到的数据用((adv_cre.put_st = 1) or (adv_cre.put_st is null))条件过滤，得到4707行数据，此时共耗时2877.672ms
 9. Aggregate using temporary table。生成count() group by所需要的临时表，最终得到2行数据
-10. Table scan on <temporary>。扫描9中得到的临时表，最终得到2行数据
+10. Table scan on temporary。扫描9中得到的临时表，最终得到2行数据
